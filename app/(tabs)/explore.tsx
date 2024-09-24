@@ -1,102 +1,108 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import Navbar from "@/components/navigation/navbar";
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabTwoScreen() {
+  const [source, setSource] = useState<{ id: string, nom: string, imageUrl: string, coords?: { latitude: number, longitude: number } }[]>([]);
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedSource = await AsyncStorage.getItem('source');
+        if (storedSource) {
+          setSource(JSON.parse(storedSource));
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des données', error);
+      }
+    };
+
+    // Fetch data on component mount
+    fetchData();
+
+    // Set up polling to check for updates every 2 seconds
+    const intervalId = setInterval(fetchData, 2000); // Adjust the interval as needed
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const onDelete = async (id: string) => {
+    const filteredSource = source.filter((item) => item.id !== id);
+    setSource(filteredSource);
+
+    // Save the updated source back to AsyncStorage
+    try {
+      await AsyncStorage.setItem('source', JSON.stringify(filteredSource));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des données', error);
+    }
+  };
+
+  const viewStyles = StyleSheet.create({
+    viewStyle: {
+      alignItems: 'center',
+      backgroundColor: 'white',
+      height: 740,
+      gap: 10,
+      display: 'flex',
+    },
+    btn_menu: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 100
+    },
+    views: {
+      marginBottom: insets.bottom,
+      marginTop: insets.top,
+      flexDirection: 'column',
+      gap: 10,
+    },
+    deleteBtnStyle: {
+      padding: 10,
+      fontSize: 14,
+      color: 'black',
+    },
+    flatlist: {
+      borderWidth: 1,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 10,
+      marginBottom: 10,
+      borderRadius: 10,
+      backgroundColor: '#f5f5f5',
+    },
+  });
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={viewStyles.viewStyle}>
+      <View style={viewStyles.views}>
+        <Navbar viewStyles={viewStyles} />
+      </View>
+      {source.length <= 0 && (
+        <Text >Aucun obstacle pour le moment..</Text>
+      )}
+      <FlatList
+        data={source}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={viewStyles.flatlist}>
+            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.nom}</Text>
+            <TouchableOpacity onPress={() => onDelete(item.id)}>
+              <TabBarIcon name="trash" color="red" />
+            </TouchableOpacity>
+
+          </View>
+        )}
+        showsVerticalScrollIndicator={false}
+      />
+
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
